@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <!-- Manifest Link will be injected by JS -->
+    <link rel="manifest" id="manifest-placeholder">
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100vh;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <iframe id="app-frame" src=""></iframe>
+    <script id="sw-code" type="javascript/worker">
+        self.addEventListener('install', (e) => {
+            e.waitUntil(
+                // Cache the current page
+                caches.open('app-store').then((cache) => cache.addAll([
+                    self.registration.scope
+                ]))
+            );
+        });
+
+        self.addEventListener('fetch', (e) => {
+            e.respondWith(
+                caches.match(e.request).then((response) => response || fetch(e.request))
+            );
+        });
+    </script>
+
+    <script>
+        // =============== APP CONFIGURATION ===============
+        const APP_CONFIG = {
+            name: "Sanwithz Portal",
+            shortName: "Sanwithz App",
+            url: "https://script.google.com/macros/s/AKfycbx_31KgT_SkzDd5FmpkMwygZBy7bVFGg78lWksNi46mHCs8eY1zMlOGglCUD-Z0G5C4Mw/exec",
+            iconUrl: "https://lh3.googleusercontent.com/d/1LoiyAnCkSW-Br8UuaWF7p8q7otmFzqtW"
+        };
+
+
+        (function () {
+            document.title = APP_CONFIG.name;
+            const iframe = document.getElementById('app-frame');
+            if (iframe) {
+                iframe.src = APP_CONFIG.url;
+            }
+
+            const manifestData = {
+                name: APP_CONFIG.name,
+                short_name: APP_CONFIG.shortName,
+                start_url: ".",
+                display: "standalone",
+                background_color: "#ffffff",
+                theme_color: "#d3d3d3",
+                icons: [
+                    {
+                        src: APP_CONFIG.iconUrl,
+                        sizes: "192x192",
+                        type: "image/png"
+                    },
+                    {
+                        src: APP_CONFIG.iconUrl,
+                        sizes: "512x512",
+                        type: "image/png"
+                    }
+                ]
+            };
+
+            const manifestBlob = new Blob([JSON.stringify(manifestData, null, 2)], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            document.querySelector('link[rel="manifest"]').href = manifestURL;
+
+            if ('serviceWorker' in navigator) {
+                const swContent = document.getElementById('sw-code').textContent;
+                const swBlob = new Blob([swContent], { type: 'text/javascript' });
+                const swURL = URL.createObjectURL(swBlob);
+
+                navigator.serviceWorker.register(swURL)
+                    .then((reg) => console.log('Service Worker registered', reg))
+                    .catch((err) => console.log('Service Worker registration failed', err));
+            }
+        })();
+    </script>
+</body>
+
+</html>
+
